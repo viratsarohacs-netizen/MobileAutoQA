@@ -1,0 +1,1 @@
+"""MobileAutoQA core framework package."""

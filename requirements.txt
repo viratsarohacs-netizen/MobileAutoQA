@@ -1,0 +1,12 @@
+# MobileAutoQA — Python dependencies
+# Install:  pip install -r requirements.txt
+
+Appium-Python-Client==3.1.1     # Appium WebDriver client (wraps Selenium 4)
+selenium==4.18.1                # WebDriver core (W3C actions, etc.)
+pytest==8.0.2                   # Test runner
+pytest-html==4.1.1              # Built-in HTML report (supplement to custom reporter)
+pytest-rerunfailures==14.0      # Retry flaky tests
+PyYAML==6.0.1                   # config.yaml / secrets.yaml parsing
+requests==2.31.0                # BrowserStack upload API + Google Chat webhook
+Jinja2==3.1.3                   # Custom HTML report templating
+Pillow==10.2.0                  # Screenshot handling for reports/email

@@ -1,0 +1,88 @@
+# ─── MobileAutoQA — Base Configuration ────────────────────────────────────────
+# Committed to source control. Secrets live in secrets.yaml (gitignored).
+# Override any value with env vars: MAQA_<SECTION>_<KEY> (e.g. MAQA_BROWSERSTACK_ENABLED)
+
+# Platform: android | ios
+platform: android
+
+# Run mode: browserstack | local
+run_mode: browserstack
+
+# Environment: qa | prod  (selects credentials block below)
+environment: qa
+
+# ─── App Identifiers (from UzioMobile repo) ───────────────────────────────────
+app:
+  android:
+    package: com.uzioapp
+    activity: com.uzioapp.MainActivity
+    # bs:// URL from BrowserStack upload, or local .apk path
+    browserstack_app: "bs://a13b87912807793599027a95b2fe051f9b0203ef"   # TA (teamadmin) 21-05-2026 APK · custom_id UZIO_TA
+    # browserstack_app: "bs://6bba9b275c18350bb27e40f7db2ea1c689004420" # PROD 22-05-2026 APK
+    apk_path: ""                # apps/uzio-prod.apk (local mode)
+  ios:
+    bundle_id: com.hcentive.hcmobile538102
+    browserstack_app: ""        # bs://...
+    ipa_path: ""                # apps/uzio-prod.ipa (local mode)
+
+# ─── Local Appium server ──────────────────────────────────────────────────────
+appium:
+  server_url: http://localhost:4723
+  android_device: ""            # ADB serial — blank = first connected device
+  ios_device: ""                # iOS UDID — blank = first available simulator
+
+# ─── BrowserStack App Automate ────────────────────────────────────────────────
+browserstack:
+  enabled: true
+  hub: https://hub-cloud.browserstack.com/wd/hub
+  # username / access_key go in secrets.yaml
+  project: UZIO Mobile
+  build: PROD Sanity MobileAutoQA 22-05-2026
+  android:
+    device: Samsung Galaxy S23
+    os_version: "13.0"
+  ios:
+    device: iPhone 15
+    os_version: "17.0"
+  # HEALED 2026-05-23: account is on BrowserStack Free plan — networkLogs/deviceLogs
+  # are paid-only and cause "NEW_SESSION" to fail. Disabled to allow session creation.
+  debug: true
+  network_logs: false
+  device_logs: false
+
+# ─── Timeouts (seconds) ───────────────────────────────────────────────────────
+timeouts:
+  default: 30
+  login: 45              # SSO/login can be slow
+  clock_state: 90        # clocked-in/out confirmation
+  implicit: 5
+
+# ─── Credentials (per environment) ────────────────────────────────────────────
+# Passwords go in secrets.yaml — usernames here are non-sensitive.
+credentials:
+  prod:
+    employee_username: shruti.singhal1@mailinator.com
+    # employee_password → secrets.yaml: credentials.prod.employee_password
+  qa:
+    employee_username: mobile2@t.com        # reporting MANAGER (primary login)
+    # employee_password → secrets.yaml: credentials.qa.employee_password
+    reportee_username: mobile3@t.com        # direct reportee of mobile2 — for time-off
+                                            # approve/decline & other manager-reportee cases
+    # reportee_password → secrets.yaml: credentials.qa.reportee_password
+
+# ─── Reporting ────────────────────────────────────────────────────────────────
+reporting:
+  output_dir: reports
+  screenshot_on_pass: true
+  screenshot_on_fail: true
+  # Google Chat + email config → secrets.yaml
+  email:
+    enabled: false
+    smtp_host: smtp.gmail.com
+    smtp_port: 587
+    from_addr: ""              # secrets.yaml: reporting.email.from_addr
+    to_addrs: []               # ["mobile-dev-qa@uzio.com"]
+    subject_prefix: "[MobileAutoQA]"
+  google_chat:
+    enabled: false    # disabled — re-enable when ready for team notifications
+    # webhook_url → secrets.yaml: reporting.google_chat.webhook_url

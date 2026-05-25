@@ -1,0 +1,8 @@
+name: Samsung Galaxy S23
+platform: android
+browserstack:
+  device: Samsung Galaxy S23
+  os_version: "13.0"
+local:
+  automation_name: UiAutomator2
+  platform_version: "13.0"
