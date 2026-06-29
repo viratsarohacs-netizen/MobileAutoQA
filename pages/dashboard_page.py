@@ -165,16 +165,20 @@ class DashboardPage(BasePage):
         Open the side drawer via the hamburger icon. The icon has no text label,
         so we try several locator strategies.
         """
-        # Try by accessibility / content-desc first
+        # Try by accessibility / content-desc first (works on both platforms).
+        # iOS exposes RN accessibilityLabel as @name/@label; Android as @content-desc.
         candidates = [
             (AppiumBy.ACCESSIBILITY_ID, "menu-sharp"),
+            (AppiumBy.ACCESSIBILITY_ID, "menu"),
             (AppiumBy.ACCESSIBILITY_ID, "Menu"),
             (AppiumBy.ACCESSIBILITY_ID, "Open navigation menu"),
             (AppiumBy.XPATH, "//*[@content-desc='menu' or @content-desc='Menu' "
                              "or @content-desc='Open navigation menu' "
                              "or contains(@content-desc,'menu')]"),
-            # iOS may expose the icon name
-            (AppiumBy.XPATH, "//*[@name='menu-sharp' or @label='Menu']"),
+            # iOS: name/label variants for the Ionicon hamburger
+            (AppiumBy.XPATH, "//*[@name='menu-sharp' or @name='menu' or @name='Menu' "
+                             "or @label='menu-sharp' or @label='menu' or @label='Menu' "
+                             "or contains(@name,'menu')]"),
         ]
         for by, val in candidates:
             try:
@@ -200,8 +204,19 @@ class DashboardPage(BasePage):
             raise ScreenUnavailable(
                 "hamburger not available (not on main shell) — refusing blind tap")
         size = self.driver.get_window_size()
-        self.tap_at(int(size["width"] * 0.11), int(size["height"] * 0.10))
-        print("[DashboardPage] Opened drawer via top-left tap fallback")
+        # Platform-aware hamburger position. Android (Samsung S23) measured at
+        # 11%/10%. iOS (HEALED 2026-05-25): iPhone uses point-based logical coords
+        # (not pixels) and the nav bar sits below the notch/Dynamic Island safe area,
+        # so the icon is higher in % terms — ~7%/7%. CALIBRATE on first iOS run via
+        # the drawer page-source dump (.tmp/drawer_page_source.xml) like we did for
+        # Android; override here or in config.app.hamburger.* if needed.
+        if self.is_ios:
+            hx, hy = 0.07, 0.07
+        else:
+            hx, hy = 0.11, 0.10
+        self.tap_at(int(size["width"] * hx), int(size["height"] * hy))
+        print(f"[DashboardPage] Opened drawer via top-left tap fallback "
+              f"({'iOS' if self.is_ios else 'Android'} {hx:.0%}/{hy:.0%})")
         time.sleep(1.5)
         # Diagnostic: dump page source to a tmp file so we can inspect drawer contents
         try:
@@ -282,10 +297,19 @@ class DashboardPage(BasePage):
         if not present:
             return False
         print("[DashboardPage] Attestation modal detected — resolving")
-        # Check the confirmation checkbox
-        self.dismiss_popup_if_present(Attestation.CONFIRM_CHECKBOX, 1)
-        # Pick the 'freely chose not to take break' option if break questions appear
-        self.dismiss_popup_if_present(Attestation.OPTION_FREELY_CHOSE, 1)
+        # Try to tap the confirmation checkbox. The element may not be directly tappable
+        # (RN custom checkbox where the label is a separate text node from the toggle).
+        # Tolerate any failure — the submit button is what actually completes the dismissal.
+        try:
+            if self.is_text_visible(Attestation.CONFIRM_CHECKBOX, 1):
+                self.tap(Attestation.CONFIRM_CHECKBOX)
+        except Exception as e:
+            print(f"[DashboardPage] Attestation checkbox tap failed (ignoring): {e}")
+        # Pick the 'freely chose not to take break' option if present
+        try:
+            self.dismiss_popup_if_present(Attestation.OPTION_FREELY_CHOSE, 1)
+        except Exception:
+            pass
         # Submit
         if self.is_text_visible(Attestation.SAVE_AND_CLOCK_OUT, 2):
             self.tap(Attestation.SAVE_AND_CLOCK_OUT)

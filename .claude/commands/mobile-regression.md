@@ -69,7 +69,7 @@ From `.tmp/regression-{date}.log`. Latest report:
 ## Step 4 — Auto-heal failures
 For any failures, invoke the **Self-Healing Agent**:
 ```
-/self-healing-agent regression --from-run={run-log path}
+/mobile-self-healing-agent regression --from-run={run-log path}
 ```
 Because regression covers more screens, expect a wider range of heals (label drift,
 new popups, timing). Prefer fixing `core/locators.py` (helps all suites). Max 2

@@ -6,38 +6,44 @@
 platform: android
 
 # Run mode: browserstack | local
-run_mode: browserstack
+run_mode: local
 
-# Environment: qa | prod  (selects credentials block below)
-environment: qa
+# Environment: qa | prod | nrspurple | prod_nrspurple  (selects credentials block below)
+# Switched to `prod_nrspurple` — Play Store NRS Purple PROD app sanity on connected OnePlus
+environment: prod_nrspurple
 
 # ─── App Identifiers (from UzioMobile repo) ───────────────────────────────────
+# Active build: base UZIO (com.uzioapp) — APK already installed & running on
+# OnePlus CPH2707 (transport_id:10) for PHIX-98315 defect verification.
+# (NRS Purple variant kept commented for switch-back.)
 app:
   android:
-    package: com.uzioapp
+    # package: com.uzioapp
+    package: com.uzioapp.nrspurple    # NRS Purple PROD (Play Store install)
     activity: com.uzioapp.MainActivity
     # bs:// URL from BrowserStack upload, or local .apk path
-    browserstack_app: "bs://a13b87912807793599027a95b2fe051f9b0203ef"   # TA (teamadmin) 21-05-2026 APK · custom_id UZIO_TA
-    # browserstack_app: "bs://6bba9b275c18350bb27e40f7db2ea1c689004420" # PROD 22-05-2026 APK
-    apk_path: ""                # apps/uzio-prod.apk (local mode)
+    browserstack_app: "bs://0b933294e6851f303bd916e832572ccf2106fed8"  # NRS Purple 12.4.4.3 build 1806 · custom_id UZIO_NRSPURPLE — Nirnay review fixes (LoginContentHelper.tsx, AboutUs.tsx)
+    # browserstack_app: "bs://6bba9b275c18350bb27e40f7db2ea1c689004420" # PROD UZIO 22-05-2026 (legacy)
+    # browserstack_app: "bs://a13b87912807793599027a95b2fe051f9b0203ef" # TA UZIO 21-05-2026 (legacy)
+    apk_path: ""                # mobile_apk/12.4.4.3_1606_android_nrspurple_build.apk (local mode)
   ios:
-    bundle_id: com.hcentive.hcmobile538102
-    browserstack_app: ""        # bs://...
-    ipa_path: ""                # apps/uzio-prod.ipa (local mode)
+    bundle_id: com.uzioapp.nrspurple
+    browserstack_app: "bs://523471b8b6f90231c6781277bb24408a3e99e37a"  # NRS Purple iOS 12.4.4.3 · custom_id UZIO_NRSPURPLE_IOS
+    ipa_path: ""                # mobile_apk/12.4.4.3_ios_nrspurple_build.ipa (local mode)
 
 # ─── Local Appium server ──────────────────────────────────────────────────────
 appium:
   server_url: http://localhost:4723
-  android_device: ""            # ADB serial — blank = first connected device
+  android_device: "4ce254ab"    # ADB serial of the user's connected phone
   ios_device: ""                # iOS UDID — blank = first available simulator
 
 # ─── BrowserStack App Automate ────────────────────────────────────────────────
 browserstack:
-  enabled: true
+  enabled: false   # local OnePlus run for PHIX-98315 — flip back on for BS runs
   hub: https://hub-cloud.browserstack.com/wd/hub
   # username / access_key go in secrets.yaml
   project: UZIO Mobile
-  build: PROD Sanity MobileAutoQA 22-05-2026
+  build: NRS Purple PHIX-86688 16-06-2026
   android:
     device: Samsung Galaxy S23
     os_version: "13.0"
@@ -49,6 +55,8 @@ browserstack:
   debug: true
   network_logs: false
   device_logs: false
+  video: true
+  interactive_debugging: true
 
 # ─── Timeouts (seconds) ───────────────────────────────────────────────────────
 timeouts:
@@ -64,11 +72,24 @@ credentials:
     employee_username: shruti.singhal1@mailinator.com
     # employee_password → secrets.yaml: credentials.prod.employee_password
   qa:
-    employee_username: mobile2@t.com        # reporting MANAGER (primary login)
+    employee_username: mobile2@t.com        # MANAGER (ER) — approves/rejects entries
     # employee_password → secrets.yaml: credentials.qa.employee_password
-    reportee_username: mobile3@t.com        # direct reportee of mobile2 — for time-off
-                                            # approve/decline & other manager-reportee cases
+    ee_manual_username: mobile1@t.com       # EE for NEW MANUAL ENTRY cases (Add Time Entry)
+    # ee_manual_password → secrets.yaml: credentials.qa.ee_manual_password
+    ee_modify_username: mobile3@t.com       # EE for MODIFICATION cases (edit existing entry)
+    # ee_modify_password → secrets.yaml: credentials.qa.ee_modify_password
+    # Legacy alias kept so existing tests/fixtures that reference 'reportee' still work
+    reportee_username: mobile3@t.com
     # reportee_password → secrets.yaml: credentials.qa.reportee_password
+  nrspurple:                                # PHIX-86688 NRS Purple white-label build
+    employee_username: ein@ch.com           # EMPLOYEE — Ein Lname (UI / sanity / E2E reportee side)
+    # employee_password → secrets.yaml: credentials.nrspurple.employee_password
+    manager_username: ale@ch.com            # REPORTEE-MANAGER — Bale Lname (approves Ein's requests)
+    # manager_password → secrets.yaml: credentials.nrspurple.manager_password
+  prod_nrspurple:                           # Live PROD NRS Purple — biometric/app-lock repro
+    portal_url: https://payroll.nrspurple.com/employee
+    employee_username: nrspurple.uzio.employee@outlook.com
+    # employee_password → secrets.yaml: credentials.prod_nrspurple.employee_password
 
 # ─── Reporting ────────────────────────────────────────────────────────────────
 reporting:

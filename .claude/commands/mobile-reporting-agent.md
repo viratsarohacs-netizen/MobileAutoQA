@@ -11,26 +11,41 @@ This is **Agent 5 of 5**:
 ## Usage
 
 ```
-/reporting-agent sanity                    ← report on latest sanity run
-/reporting-agent PHIX-97533                ← report on a ticket's run(s)
-/reporting-agent --all                     ← aggregate all suites
-/reporting-agent sanity --email            ← also email the team
-/reporting-agent sanity --no-chat          ← suppress Google Chat post
+/mobile-reporting-agent sanity                    ← report on latest sanity run
+/mobile-reporting-agent PHIX-97533                ← report on a ticket's run(s)
+/mobile-reporting-agent --all                     ← aggregate all suites
+/mobile-reporting-agent sanity --email            ← also email the team
+/mobile-reporting-agent sanity --no-chat          ← suppress Google Chat post
 ```
 
 ---
 
-## What's Already Automatic
+## Reporting stack — Extent-styled HTML (single self-contained file)
 
-`core/reporter.py` runs in the pytest session teardown and ALWAYS produces, per run:
-- `reports/{suite}/{timestamp}/report.html` — self-contained HTML (inline screenshots, heal log, badge)
-- `reports/{suite}/{timestamp}/run-log.json` — machine-readable
-- `*.png` screenshots (pass + fail, per config)
-- A Google Chat card (if `reporting.google_chat.enabled` + webhook in secrets.yaml)
-- An email (if `reporting.email.enabled` + SMTP creds in secrets.yaml)
+`core/reporter.py` runs in the pytest session teardown and produces an
+**Extent-styled** report per run — a single self-contained HTML you can email,
+share, or drop on a network drive (no server needed):
+- `reports/{suite}/{timestamp}/report.html` — dashboard view (summary cards +
+  donut chart), expandable test cards with **inline screenshots** and the
+  **self-healing log**, filter by status (Pass/Fail/Skip), category view.
+- `reports/{suite}/{timestamp}/run-log.json` — machine-readable run data (this
+  agent aggregates these across runs).
+- `*.png` screenshots (pass + fail, per config).
+- Google Chat card (if `reporting.google_chat.enabled` + webhook in secrets.yaml).
+- Email (if `reporting.email.enabled` + SMTP creds in secrets.yaml).
 
-This agent is for **aggregation, re-delivery, and richer summaries** beyond the
-single-run auto-report.
+To **open / share** a single run's report:
+```bash
+start reports/<suite>/<timestamp>/report.html   # Windows
+# or open in browser; the HTML is self-contained (inline CSS/JS + base64 screenshots)
+```
+To **regenerate** an Extent-style HTML from any `run-log.json`:
+```bash
+python -m utils.extent_report reports/<suite>/<timestamp>/run-log.json
+```
+
+This agent is for **cross-run aggregation, re-delivery, and richer summaries**
+beyond the single-run auto-report.
 
 ---
 

@@ -11,13 +11,13 @@ This is **Agent 3 of 5**:
 ## Usage
 
 ```
-/execution-agent PHIX-97533                 ← run a ticket's tests
-/execution-agent sanity                      ← run sanity suite
-/execution-agent regression                  ← run regression suite
-/execution-agent PHIX-97533 --platform=ios   ← iOS
-/execution-agent PHIX-97533 --platform=both  ← Android then iOS
-/execution-agent sanity --local              ← local device/simulator
-/execution-agent sanity -k clock_in          ← single test by keyword
+/mobile-execution-agent PHIX-97533                 ← run a ticket's tests
+/mobile-execution-agent sanity                      ← run sanity suite
+/mobile-execution-agent regression                  ← run regression suite
+/mobile-execution-agent PHIX-97533 --platform=ios   ← iOS
+/mobile-execution-agent PHIX-97533 --platform=both  ← Android then iOS
+/mobile-execution-agent sanity --local              ← local device/simulator
+/mobile-execution-agent sanity -k clock_in          ← single test by keyword
 ```
 
 ---
@@ -28,7 +28,7 @@ This is **Agent 3 of 5**:
    ```bash
    ls tests/jira/{JIRA-ID}/test_*.py     # or tests/sanity / tests/regression
    ```
-   If missing: "No tests for {JIRA-ID}. Run `/test-generation-agent {JIRA-ID}` first."
+   If missing: "No tests for {JIRA-ID}. Run `/mobile-test-generation-agent {JIRA-ID}` first."
 
 2. **Verify Python env:**
    ```bash
@@ -106,13 +106,23 @@ After pytest exits, read `.tmp/run-{target}.log`:
 
 Parse `run-log.json` for per-test status, messages, screenshots, and heal entries.
 
+**Run-mode gotcha:** `MAQA_*` env vars set with cmd-style `set VAR=val` do NOT export
+in the bash shell. Use the bash inline form `MAQA_PLATFORM=android python -m pytest …`
+OR (most reliable across shells) set `platform` / `run_mode` / `environment` in
+`config.yaml`. The dashboard sets them via `os.environ`, which works.
+
+**Reports are produced automatically** by `core/reporter.py` in the pytest session
+teardown — an Extent-styled self-contained `report.html` per run under
+`reports/<suite>/<timestamp>/`, with inline screenshots and the self-healing log.
+The Reporting Agent handles aggregation across runs + Google Chat / email.
+
 ---
 
 ## Step 4 — On Failure → Self-Healing Agent
 
 If any test failed, automatically invoke:
 ```
-/self-healing-agent {target} --from-run={run-log path}
+/mobile-self-healing-agent {target} --from-run={run-log path}
 ```
 Pass the failure messages, screenshots, and heal logs. After the healer patches
 and re-runs, collect the updated result.
@@ -140,7 +150,7 @@ When `--platform=both`:
    Healed   : {N}
    Run log  : reports/{target}/{timestamp}/run-log.json
 
-Next: /reporting-agent {target}   (or it auto-runs)
+Next: /mobile-reporting-agent {target}   (or it auto-runs)
 ```
 
 Note: The Reporter (`core/reporter.py`) already writes the HTML report and posts

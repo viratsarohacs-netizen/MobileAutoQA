@@ -11,14 +11,12 @@ Driver + login are provided by the `driver` fixture in conftest.py.
 """
 
 import pytest
-import allure
 
 from core.locators import Login, BottomNav, TimeTracking
 from pages.dashboard_page import DashboardPage
 from pages.time_tracking_page import TimeTrackingPage
 
 
-@allure.feature("Mobile Sanity — Core")
 @pytest.mark.sanity
 @pytest.mark.usefixtures("driver")
 class TestSanity:
@@ -28,7 +26,6 @@ class TestSanity:
         self._current_test_id = test_id
         self._current_test_name = name
         self._heal_log = []
-        allure.dynamic.title(f"{test_id} · {name}")
 
     def _collect_heals(self, *pages):
         for p in pages:

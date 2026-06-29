@@ -34,7 +34,7 @@ def upload(file_path: str, custom_id: str = None) -> str:
                              files={"file": f}, data=data, timeout=600)
     resp.raise_for_status()
     app_url = resp.json().get("app_url")
-    print(f"[Upload] Done → {app_url}")
+    print(f"[Upload] Done -> {app_url}")
     print(f"[Upload] Put this in config.yaml under app.<platform>.browserstack_app")
     return app_url
 

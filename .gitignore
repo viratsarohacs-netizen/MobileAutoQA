@@ -26,6 +26,15 @@ mobile_apk/
 .idea/
 .vscode/
 
-# Allure reporting (generated)
-reports/allure-results/
-reports/allure-report/
+# (reports/ is already ignored above — covers Extent-styled report.html + run-log.json + screenshots)
+
+# Local working artifacts — defect/Jira scratch JSONs at repo root
+.defect_*.json
+.phix*.json
+.phix_*.json
+
+# Tool state
+.playwright-mcp/
+
+# Demo deck deps — vendored node_modules should never be committed
+demo/node_modules/

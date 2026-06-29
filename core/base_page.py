@@ -244,10 +244,15 @@ class BasePage:
         Safe to call repeatedly — no-op when no dialog is present.
         """
         # Grant-style buttons (exact text). Android system dialog button is "Allow";
-        # newer Android uses "While using the app"; iOS uses "Allow"/"OK".
+        # newer Android uses "While using the app".
+        # iOS (HEALED 2026-05-25) uses different labels: location = "Allow While Using
+        # App" / "Allow Once"; notifications/ATT = "Allow"; generic = "OK".
         grant_buttons = [
+            # Android
             "Allow", "ALLOW", "While using the app", "Only this time",
-            "OK", "Allow all the time", "Continue",
+            "Allow all the time", "OK", "Continue",
+            # iOS
+            "Allow While Using App", "Allow While Using the App", "Allow Once",
         ]
         any_dismissed = False
         for _ in range(rounds):
@@ -315,7 +320,7 @@ class BasePage:
     # ─── Gestures ────────────────────────────────────────────────────────────
 
     def press_back(self):
-        """Android hardware BACK; iOS on-screen back arrow fallback."""
+        """Android hardware BACK; iOS nav-bar back button / edge-swipe fallback."""
         if not self.is_ios:
             try:
                 self.driver.press_keycode(4)  # Android KEYCODE_BACK
@@ -323,12 +328,27 @@ class BasePage:
                 return
             except WebDriverException:
                 pass
-        # iOS / fallback
+        # iOS has no hardware back. Try a nav-bar back button first (RN/iOS exposes
+        # it as a 'Back'/chevron element), then fall back to the edge-swipe-from-left
+        # gesture (the standard iOS "go back").
         backs = self.driver.find_elements(
-            AppiumBy.XPATH, "//*[@name='Back' or @label='Back' or contains(@name,'back')]")
+            AppiumBy.XPATH, "//*[@name='Back' or @label='Back' or @name='chevron-back' "
+                            "or contains(@name,'back') or contains(@label,'Back')]")
         if backs:
             backs[0].click()
-        else:
+            print("[BasePage] iOS back via nav-bar button")
+            return
+        # Edge swipe from left edge → right (iOS interactive pop gesture)
+        try:
+            size = self.driver.get_window_size()
+            y = int(size["height"] * 0.5)
+            finger = PointerInput(interaction.POINTER_TOUCH, "finger")
+            actions = ActionBuilder(self.driver, mouse=finger)
+            actions.pointer_action.move_to_location(2, y).pointer_down()
+            actions.pointer_action.pause(0.2).move_to_location(int(size["width"] * 0.85), y).pointer_up()
+            actions.perform()
+            print("[BasePage] iOS back via edge-swipe")
+        except WebDriverException:
             try:
                 self.driver.back()
             except WebDriverException:

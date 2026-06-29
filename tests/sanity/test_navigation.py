@@ -20,14 +20,12 @@ Never enter bank/routing/SSN data in sanity.
 """
 
 import pytest
-import allure
 
 from core.locators import (BottomNav, TimeOff, Schedule, Benefits, Inbox,
                            Drawer, Pay, Personal, ManageTeam)
 from pages.dashboard_page import DashboardPage, ScreenUnavailable
 
 
-@allure.feature("Mobile Sanity — Navigation")
 @pytest.mark.sanity
 @pytest.mark.usefixtures("driver")
 class TestNavigation:
@@ -36,7 +34,6 @@ class TestNavigation:
         self._current_test_id = test_id
         self._current_test_name = name
         self._heal_log = []
-        allure.dynamic.title(f"{test_id} · {name}")
 
     def _collect_heals(self, *pages):
         for p in pages:
@@ -132,7 +129,41 @@ class TestNavigation:
         self._begin("MS-34", "Tasks")
         self._drawer(Drawer.TASKS, [Personal.TASKS, Personal.TASKS_PENDING])
 
-    # ── Drawer screens: Manage Team (manager) ────────────────────────────────
+    # NOTE: Manage Team drawer items (Team Timesheet / Team Time Off) are only
+    # visible to the reporting-manager role. Those tests live in
+    # TestNavigationManager below — that class logs in with manager_username so
+    # the drawer entries render.
+
+
+@pytest.mark.sanity
+@pytest.mark.usefixtures("driver")
+class TestNavigationManager:
+    """Sanity for drawer items that only render for the reporting-manager role.
+
+    Logs in as credentials.<env>.manager_username (driven by login_role on the
+    class; conftest's driver fixture reads it). Separate class -> separate
+    BrowserStack session, but that is the only way to switch the logged-in user.
+    """
+
+    login_role = "manager"
+
+    def _begin(self, test_id, name):
+        self._current_test_id = test_id
+        self._current_test_name = name
+        self._heal_log = []
+
+    def _collect_heals(self, *pages):
+        for p in pages:
+            self._heal_log.extend(getattr(p, "heal_log", []))
+
+    def _drawer(self, item_text, verify_any):
+        dash = DashboardPage(self.driver)
+        try:
+            dash.open_drawer_and_tap(item_text, verify_any=verify_any)
+        except ScreenUnavailable as e:
+            self._collect_heals(dash)
+            pytest.skip(str(e))
+        self._collect_heals(dash)
 
     def test_ms37_team_timesheet(self):
         self._begin("MS-37", "Team Timesheet")

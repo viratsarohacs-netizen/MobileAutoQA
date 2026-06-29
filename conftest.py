@@ -13,7 +13,6 @@ tests/jira/PHIX-97533 -> "PHIX-97533". Override with -Dsuite or --suite.
 
 import time
 import pytest
-import allure
 
 from core.config_loader import config
 from core.driver_factory import create_driver
@@ -44,33 +43,10 @@ def _suite_name(request):
     return "sanity"
 
 
-def _write_allure_environment(suite):
-    """Write environment.properties so the Allure report shows run context."""
-    try:
-        from pathlib import Path
-        results = Path("reports/allure-results")
-        results.mkdir(parents=True, exist_ok=True)
-        dev = config.get(f"browserstack.{config.platform}.device", "local") \
-            if config.browserstack_enabled else "local-device"
-        lines = [
-            f"Platform={config.platform}",
-            f"RunMode={config.run_mode}",
-            f"Environment={config.environment}",
-            f"Device={dev}",
-            f"Build={config.get('browserstack.build', '')}",
-            f"AppId={config.get('app.android.package', '')}",
-            f"Suite={suite}",
-        ]
-        (results / "environment.properties").write_text("\n".join(lines), encoding="utf-8")
-    except Exception as e:
-        print(f"[conftest] allure environment write skipped: {e}")
-
-
 @pytest.fixture(scope="session")
 def reporter(request):
     suite = _suite_name(request)
     rep = Reporter(suite)
-    _write_allure_environment(suite)
     print(f"\n[conftest] Reporter initialized — suite={suite}, dir={rep.run_dir}")
     yield rep
     rep.finish()
@@ -81,12 +57,17 @@ def driver(request, reporter):
     build = request.config.getoption("--build") or config.get("browserstack.build")
     drv = create_driver(build_name=build)
 
-    # Login once per class
+    # Login once per class. Test classes can set `login_role = "manager"` to log
+    # in as the reporting manager (drawer items like Team Timesheet / Team Time
+    # Off are only visible to that role); default is the employee account.
+    role = getattr(request.cls, "login_role", "employee")
+    username = config.credential(f"{role}_username")
+    password = config.credential(f"{role}_password")
     login = LoginPage(drv)
     if login.is_already_logged_in():
-        print("[conftest] Already logged in")
+        print(f"[conftest] Already logged in (role={role})")
     else:
-        login.login()
+        login.login(username=username, password=password)
 
     # Expose to test class
     request.cls.driver = drv
@@ -133,29 +114,13 @@ def pytest_runtest_makereport(item, call):
         shot = _safe_shot(driver) if config.get("reporting.screenshot_on_pass", True) else None
         reporter.record(test_id, test_name, "PASS", duration=duration,
                         screenshot_bytes=shot, heals=heals)
-        _attach_allure(shot, heals)
     elif report.failed:
         shot = _safe_shot(driver) if config.get("reporting.screenshot_on_fail", True) else None
         msg = str(report.longrepr.reprcrash.message) if report.longrepr else "failed"
         reporter.record(test_id, test_name, "FAIL", message=msg, duration=duration,
                         screenshot_bytes=shot, heals=heals)
-        _attach_allure(shot, heals)
     elif report.skipped:
         reporter.record(test_id, test_name, "SKIP", duration=duration, heals=heals)
-        _attach_allure(None, heals)
-
-
-def _attach_allure(shot, heals):
-    """Attach the screenshot + self-healing log to the current Allure test."""
-    try:
-        if shot:
-            allure.attach(shot, name="screenshot",
-                          attachment_type=allure.attachment_type.PNG)
-        if heals:
-            allure.attach("\n".join(heals), name="self-healing log",
-                          attachment_type=allure.attachment_type.TEXT)
-    except Exception:
-        pass  # never let reporting break a test result
 
 
 def _safe_shot(driver):

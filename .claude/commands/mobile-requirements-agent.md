@@ -10,8 +10,8 @@ This is **Agent 1 of 5** in the MobileAutoQA pipeline:
 ## Usage
 
 ```
-/requirements-agent PHIX-97533
-/requirements-agent PHIX-97533 --paste     ← paste description manually if no Jira access
+/mobile-requirements-agent PHIX-97533
+/mobile-requirements-agent PHIX-97533 --paste     ← paste description manually if no Jira access
 ```
 
 ---
@@ -90,13 +90,25 @@ Write `tests/jira/{JIRA-ID}/requirements.md`:
 
 ---
 
-## Step 4 — Reconcile With the App (optional but recommended)
+## Step 4 — Reconcile With the App Code (RECOMMENDED — the code is authoritative)
 
-Cross-check requirement text against the real app strings in
-`core/locators.py` and the UzioMobile repo (`C:\code\master\UzioMobile`):
-- If the ticket references a button/label, find its real i18n string in
-  `src/i18n/locales/en.json` and note it (the app has no testIDs — text is the locator).
-- If a new UI element is introduced, flag that `core/locators.py` will need a new constant.
+The ticket says WHAT; the UzioMobile RN code says the exact text and screens. Read it.
+
+**4a — find the developer's mobile commits for this ticket** (reveals the exact RN
+screens changed — more reliable than the ticket prose):
+```bash
+git -C "C:/code/master/UzioMobile" log --all --oneline -i --grep="PHIX-XXXXX"
+git -C "C:/code/master/UzioMobile" show <SHA> --stat --no-patch   # changed screens
+```
+If no commits: fall back to searching `src/screens/` by feature keyword.
+
+**4b — resolve real UI text** against `core/locators.py` and the UzioMobile repo:
+- For any button/label/heading the ticket references, find its `t('key')` and resolve
+  the English value in `src/i18n/locales/en.json` (the app has no testIDs — text IS
+  the locator). Record the exact string.
+- Note feature-flag gates (`PERM_FEATURE_*`, `isEmployeeManager`) → which role/employer
+  the requirement applies to.
+- If a NEW UI element is introduced, flag that `core/locators.py` needs a new constant.
 
 ---
 
@@ -116,7 +128,7 @@ New locators needed: {list or "none"}
 
 File: tests/jira/{JIRA-ID}/requirements.md
 
-Next: /test-generation-agent {JIRA-ID}
+Next: /mobile-test-generation-agent {JIRA-ID}
 ```
 
 ---

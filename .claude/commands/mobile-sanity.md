@@ -91,7 +91,7 @@ Latest report: `ls -t reports/sanity/*/run-log.json | head -1`.
 ## Step 5 — Auto-heal failures
 If any test failed, invoke the **Self-Healing Agent**:
 ```
-/self-healing-agent sanity --from-run={run-log path}
+/mobile-self-healing-agent sanity --from-run={run-log path}
 ```
 Known sanity failure modes and fixes:
 - **MS-09 clock-in not confirmed** → attestation modal → `dismiss_attestation_if_present()` (already wired; verify it triggered)

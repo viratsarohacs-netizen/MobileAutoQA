@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MobileAutoQA — Agentic Pipeline</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#0d0d12; --bg2:#16161f; --card:#1b1b27; --card-on:#22223a;
+    --txt:#f2f1ee; --txt2:#a8a7b4; --txt3:#75747f; --border:#2c2c3a;
+    --purple:#7F77DD; --purple-soft:rgba(127,119,221,.18);
+    --teal:#1D9E75; --amber:#EF9F27;
+    --in-bg:#0f2c25; --in-tx:#5DCAA5; --out-bg:#201d3a; --out-tx:#AFA9EC;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(circle at 50% 0%,var(--bg2),var(--bg));color:var(--txt);
+    font-family:var(--font);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;min-height:100vh;padding:32px;overflow-x:hidden}
+  .head{text-align:center;margin-bottom:34px}
+  .head h1{font-size:30px;font-weight:600;margin:0 0 8px;letter-spacing:-.5px}
+  .head p{font-size:15px;color:var(--txt2);margin:0}
+  .head .tags{margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .tag{font-size:12px;color:var(--txt2);border:1px solid var(--border);
+    border-radius:20px;padding:4px 12px}
+  .wrap{width:100%;max-width:1080px}
+  .ends{display:flex;justify-content:space-between;align-items:center;gap:8px;max-width:880px;margin:0 auto 18px}
+  .chip{font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;display:inline-flex;align-items:center;gap:8px}
+  .in{background:var(--in-bg);color:var(--in-tx)}
+  .out{background:var(--out-bg);color:var(--out-tx)}
+  .row{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center}
+  .stage{position:relative;flex:1 1 150px;max-width:172px;min-width:138px;background:var(--card);
+    border:1.5px solid var(--border);border-radius:14px;padding:18px 12px;text-align:center;
+    transition:all .35s ease;z-index:2}
+  .stage.on{border-color:var(--purple);background:var(--card-on);box-shadow:0 0 0 4px var(--purple-soft),0 8px 30px rgba(0,0,0,.35);transform:translateY(-4px)}
+  .ico{font-size:30px;color:var(--txt2);transition:color .35s}
+  .stage.on .ico{color:var(--purple)}
+  .num{font-size:11px;color:var(--txt3);margin:8px 0 2px;text-transform:uppercase;letter-spacing:.5px}
+  .name{font-size:15px;font-weight:500;margin:2px 0 4px;line-height:1.25}
+  .sub{font-size:12px;color:var(--txt2);line-height:1.35}
+  .conn{flex:0 0 30px;align-self:center;height:3px;background:var(--border);position:relative;
+    border-radius:2px;overflow:hidden;z-index:1}
+  .conn .fill{position:absolute;inset:0;width:0;background:var(--teal);transition:width .45s ease}
+  .conn.flow .fill{width:100%}
+  .loop{max-width:880px;margin:18px auto 0;display:flex;justify-content:center}
+  .loopbox{font-size:12.5px;color:var(--txt2);border:1.5px dashed var(--border);border-radius:8px;
+    padding:7px 16px;display:inline-flex;align-items:center;gap:8px;transition:all .35s}
+  .loopbox.on{border-color:var(--amber);color:var(--amber);background:rgba(239,159,39,.1)}
+  .status{text-align:center;font-size:14px;color:var(--txt2);margin-top:26px;min-height:20px}
+  .status b{color:var(--txt);font-weight:500}
+  .foot{margin-top:30px;font-size:12px;color:var(--txt3);text-align:center}
+  @media(max-width:760px){.head h1{font-size:23px}.stage{padding:14px 8px}.ico{font-size:24px}}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>MobileAutoQA — Agentic Test Pipeline</h1>
+    <p>Autonomous agent-driven mobile QA for the UZIO Mobile app · Appium + Python + pytest</p>
+    <div class="tags">
+      <span class="tag">Android &amp; iOS</span>
+      <span class="tag">BrowserStack + local device</span>
+      <span class="tag">6-strategy self-healing</span>
+      <span class="tag">Offline HTML reports</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="ends">
+      <span class="chip in"><i class="ti ti-ticket"></i> Jira ticket / suite</span>
+      <span class="chip out"><i class="ti ti-report"></i> HTML report + team notify</span>
+    </div>
+    <div class="row" id="row">
+      <div class="stage" data-i="0"><div class="ico"><i class="ti ti-file-text"></i></div><div class="num">Agent 1</div><div class="name">Requirements</div><div class="sub">Jira &rarr; requirements</div></div>
+      <div class="conn"><div class="fill"></div></div>
+      <div class="stage" data-i="1"><div class="ico"><i class="ti ti-list-check"></i></div><div class="num">Agent 2</div><div class="name">Test generation</div><div class="sub">Cases &middot; pytest &middot; Excel</div></div>
+      <div class="conn"><div class="fill"></div></div>
+      <div class="stage" data-i="2"><div class="ico"><i class="ti ti-device-mobile"></i></div><div class="num">Agent 3</div><div class="name">Execution</div><div class="sub">Device / BrowserStack</div></div>
+      <div class="conn"><div class="fill"></div></div>
+      <div class="stage" data-i="3"><div class="ico"><i class="ti ti-refresh"></i></div><div class="num">Agent 4</div><div class="name">Self-healing</div><div class="sub">6-strategy locator fix</div></div>
+      <div class="conn"><div class="fill"></div></div>
+      <div class="stage" data-i="4"><div class="ico"><i class="ti ti-chart-bar"></i></div><div class="num">Agent 5</div><div class="name">Reporting</div><div class="sub">Report + Chat / email</div></div>
+    </div>
+    <div class="loop"><span class="loopbox" id="loop"><i class="ti ti-arrow-back-up"></i> Self-heal loop — re-run execution after patching locators</span></div>
+    <div class="status" id="status">Autonomous pipeline · runs in a loop</div>
+  </div>
+
+  <div class="foot">MobileAutoQA · /requirements-agent → /test-generation-agent → /execution-agent → /self-healing-agent → /reporting-agent</div>
+
+<script>
+(function(){
+  var stages=[].slice.call(document.querySelectorAll('.stage'));
+  var conns=[].slice.call(document.querySelectorAll('.conn'));
+  var loop=document.getElementById('loop');
+  var status=document.getElementById('status');
+  var msg=[
+    "Reading Jira ticket &amp; UzioMobile screens, en.json strings",
+    "Generating plain-English cases + pytest classes + Excel workbook",
+    "Running on physical device / BrowserStack cloud",
+    "Locator broke — healing via fallback strategy &amp; re-running",
+    "Building self-contained HTML report, notifying the team"
+  ];
+  var i=-1;
+  function clear(){stages.forEach(function(s){s.classList.remove('on')});conns.forEach(function(c){c.classList.remove('flow')});loop.classList.remove('on');}
+  function step(){
+    i++;
+    if(i>=stages.length){
+      status.innerHTML='<b>Cycle complete</b> — report delivered. Restarting…';
+      setTimeout(function(){clear();i=-1;setTimeout(step,800);},1600);return;
+    }
+    clear();
+    var s=stages[i];s.classList.add('on');
+    status.innerHTML='<b>'+s.querySelector('.name').textContent+'</b> — '+msg[i];
+    if(i>0)conns[i-1].classList.add('flow');
+    if(i===3){loop.classList.add('on');setTimeout(function(){if(i===3)loop.classList.remove('on');},1200);}
+    setTimeout(step,1700);
+  }
+  setTimeout(step,600);
+})();
+</script>
+</body>
+</html>

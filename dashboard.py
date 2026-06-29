@@ -251,39 +251,19 @@ if st.button("▶️ Start run", type="primary", disabled=run_disabled, use_cont
         status.update(label=f"❌ Finished in {dur}s (exit {proc.returncode}) — {summary}",
                       state="error")
 
-# ─── Allure report (primary) ─────────────────────────────────────────────────
+# ─── HTML report (Extent-styled, self-contained) ─────────────────────────────
 st.divider()
-st.subheader("📊 Allure report")
-allure_results = ROOT / "reports" / "allure-results"
-has_results = allure_results.exists() and any(allure_results.iterdir())
-ac1, ac2 = st.columns([1, 1])
-if ac1.button("Generate & open Allure report", type="primary",
-              disabled=not has_results, use_container_width=True):
-    with st.spinner("Generating Allure report…"):
-        # generate (preserves history) then open in a detached server
-        subprocess.run([PYTHON, "-m", "utils.allure_report", "--generate"],
-                       cwd=str(ROOT))
-        subprocess.Popen('allure open "%s"' % (ROOT / "reports" / "allure-report"),
-                         shell=True, cwd=str(ROOT))
-    st.success("Allure report generated and opened in your browser.")
-if ac2.button("Serve Allure (ephemeral)", disabled=not has_results,
-              use_container_width=True):
-    subprocess.Popen([PYTHON, "-m", "utils.allure_report", "--serve"], cwd=str(ROOT))
-    st.info("Allure serve started — it will open in your browser shortly.")
-if not has_results:
-    st.caption("Run a suite first — pytest writes Allure results to reports/allure-results.")
-
-# ─── Custom HTML report (legacy) ─────────────────────────────────────────────
-with st.expander("Legacy HTML report"):
-    report_suite = st.session_state.get("last_suite", suite_name.lower())
-    report = latest_report(report_suite)
-    if report:
-        st.caption(report)
-        with open(report, "rb") as f:
-            st.download_button("⬇️ Download report.html", f, file_name="report.html",
-                               mime="text/html", use_container_width=True)
-        if st.toggle("View inline"):
-            with open(report, "r", encoding="utf-8") as f:
-                components.html(f.read(), height=700, scrolling=True)
-    else:
-        st.info(f"No legacy report yet for suite '{report_suite}'.")
+st.subheader("📊 HTML report")
+# pytest's session teardown writes report.html into reports/<suite>/<timestamp>/.
+report_suite = st.session_state.get("last_suite", suite_name.lower())
+report = latest_report(report_suite)
+if report:
+    st.caption(report)
+    with open(report, "rb") as f:
+        st.download_button("⬇️ Download report.html", f, file_name="report.html",
+                           mime="text/html", use_container_width=True)
+    if st.toggle("View inline"):
+        with open(report, "r", encoding="utf-8") as f:
+            components.html(f.read(), height=700, scrolling=True)
+else:
+    st.info(f"No report yet for suite '{report_suite}'. Run a suite to generate one.")

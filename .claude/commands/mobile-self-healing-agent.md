@@ -11,10 +11,10 @@ This is **Agent 4 of 5**:
 ## Usage
 
 ```
-/self-healing-agent sanity
-/self-healing-agent PHIX-97533
-/self-healing-agent sanity --test=test_ms09_clock_in
-/self-healing-agent PHIX-97533 --from-run=reports/PHIX-97533/2026-05-22_14-30-00/run-log.json
+/mobile-self-healing-agent sanity
+/mobile-self-healing-agent PHIX-97533
+/mobile-self-healing-agent sanity --test=test_ms09_clock_in
+/mobile-self-healing-agent PHIX-97533 --from-run=reports/PHIX-97533/2026-05-22_14-30-00/run-log.json
 ```
 
 ---
@@ -43,6 +43,15 @@ For each `"status": "FAIL"` result, gather:
 - `message` (assertion/exception text)
 - `screenshot` (path — **open and look at it**)
 - `heals` (what runtime healing already tried)
+
+**Open the run's `report.html` (Extent-styled HTML)** — every test card has an
+inline screenshot and the self-healing log. The screenshot is the ground truth
+for what the app actually showed (this is exactly how the location-dialog and
+weather-app-launch bugs were diagnosed). Path:
+```
+reports/<suite>/<latest-timestamp>/report.html
+```
+Or read the raw PNGs / `run-log.json` directly under that same folder.
 
 Read the failing test file and the page objects it uses.
 

@@ -33,7 +33,7 @@ def _create_android_driver(build_name, session_name):
     options = UiAutomator2Options()
     options.platform_name = "Android"
     options.automation_name = "UiAutomator2"
-    options.no_reset = True
+    options.no_reset = False  # clear stored auth token so login screen appears reliably
     options.new_command_timeout = 120
 
     if config.browserstack_enabled:
@@ -49,6 +49,10 @@ def _create_android_driver(build_name, session_name):
         device = config.get("appium.android_device")
         if device:
             options.udid = device
+        # Disable the ADB-install verifier on the device once per session — otherwise
+        # Android refuses Appium's UiAutomator2 helper APK with
+        # INSTALL_FAILED_VERIFICATION_FAILURE on OnePlus / Samsung / Pixel. Idempotent.
+        _disable_adb_install_verifier(device)
         apk = config.get("app.android.apk_path")
         if apk:
             options.app = str(config.root / apk) if not apk.startswith("/") else apk
@@ -60,6 +64,26 @@ def _create_android_driver(build_name, session_name):
         url = config.get("appium.server_url")
 
     return webdriver.Remote(url, options=options)
+
+
+def _disable_adb_install_verifier(udid):
+    """Programmatic device-side fix for INSTALL_FAILED_VERIFICATION_FAILURE.
+
+    On Android 14+/Samsung/OnePlus, adb-pushed APKs (including Appium's helper)
+    are blocked by the package verifier unless the user manually toggles two
+    settings. We can flip them via 'settings put' from adb shell. Idempotent.
+    """
+    import subprocess
+    serial_args = ["-s", udid] if udid else []
+    for key in ("verifier_verify_adb_installs", "package_verifier_enable"):
+        try:
+            subprocess.run(["adb", *serial_args, "shell", "settings", "put",
+                            "global", key, "0"],
+                           timeout=10, check=False,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            print(f"[Driver] could not disable {key}: {e}")
+    print(f"[Driver] adb install verifier disabled on device {udid or '<auto>'}")
 
 
 # ─── iOS ────────────────────────────────────────────────────────────────────
@@ -113,6 +137,10 @@ def _apply_browserstack_caps(options, platform, build_name, session_name):
         bstack["networkLogs"] = True
     if config.get("browserstack.device_logs", False):
         bstack["deviceLogs"] = True
+    if config.get("browserstack.video", False):
+        bstack["video"] = True
+    if config.get("browserstack.interactive_debugging", False):
+        bstack["interactiveDebugging"] = True
     if platform == "android":
         bstack["deviceName"] = config.get("browserstack.android.device", "Samsung Galaxy S23")
         bstack["osVersion"] = config.get("browserstack.android.os_version", "13.0")
